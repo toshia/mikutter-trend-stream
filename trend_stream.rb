@@ -16,7 +16,11 @@ Plugin.create :trend_stream do
   # ばずったーから取得したキーワードの配列
   def rewind_buzzword
     open('http://buzztter.com/ja/', 'r'){ |io|
-      @buzz = (Hpricot(io)/'div#buzzphrases'/'a').map{ |elm| elm.attributes['title'] }.sort.freeze } end
+      @buzz = (Hpricot(io)/'div#buzzphrases'/'a').map{ |elm|
+        elm.attributes['title']
+      }.select{ |w|
+        not(w =~ /[\*]/)
+      }.sort.freeze } end
 
   def buzz
     @buzz ||= rewind_buzzword
@@ -35,8 +39,9 @@ Plugin.create :trend_stream do
       Plugin.call(:filter_stream_force_retry) end end
 
   on_appear do |messages|
+    buzzword_top = buzz[0, 8]
     result = messages.select{ |message|
-      buzz.any?{ |b| message.to_s.include? b } }
+      buzzword_top.any?{ |b| message.to_s.include? b } }
     main.add result if not result.empty? end
 
 end
