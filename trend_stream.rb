@@ -6,10 +6,17 @@ require 'hpricot'
 
 Plugin.create :trend_stream do
 
-  main = Gtk::TimeLine.new()
-  main.force_retrieve_in_reply_to = false
+  tab(:trend_stream, "Trend") do
+    timeline :trend_stream
+  end
 
-  Delayer.new{ Plugin.call(:mui_tab_regist, main, 'Trend') }
+  timeline_created = on_timeline_created do |tl|
+    if tl.slug == :trend_stream
+      Delayer.new{
+        gtk_timeline = Plugin.filtering(:gui_get_gtk_widget, tl).first
+        gtk_timeline.force_retrieve_in_reply_to = false
+      }
+      detach :timeline_created, timeline_created end end
 
   # ばずったーからバズワードを取得して配列で返す。
   # ==== Return
@@ -42,6 +49,6 @@ Plugin.create :trend_stream do
     buzzword_top = buzz[0, 8]
     result = messages.select{ |message|
       buzzword_top.any?{ |b| message.to_s.include? b } }
-    main.add result if not result.empty? end
+    timeline(:trend_stream) << result if not result.empty? end
 
 end
